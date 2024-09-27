@@ -32,7 +32,7 @@ on:
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}         
-  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}$
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
   ECR_REPONAME: ${{ vars.CONTAINER_NAME }}
   
 
@@ -79,7 +79,7 @@ jobs:
       with:
         context: .
         push: true
-        tags: 381492074864.dkr.ecr.ap-northeast-2.amazonaws.com/${{ env.ECR_REPONAME }}:${{ env.SHA }}
+        tags: ${{ env.ECR_REPOSITORY }}/${{ env.ECR_REPONAME }}:${{ env.SHA }}
 
     # - name: Fill in the new image ID in the Amazon ECS task definition
     #   id: task-def
