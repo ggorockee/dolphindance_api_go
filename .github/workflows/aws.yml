@@ -43,9 +43,23 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    environment: production
-
+    outputs:
+      SHA: ${{ env.SHA }}
     steps:
+    - name: Set short git commit SHA
+      uses: benjlevesque/short-sha@v3.0
+      id: short-sha
+      with:
+        length: 6
+    - run: echo $SHA
+      env:
+        SHA: ${{ steps.short-sha.outputs.sha }}
+    - name: set variables
+      uses: marcdomain/set-variables@v1.2
+      with:
+        variables: |
+          SHA: "${{ env.SHA }}"
+          
     - name: Checkout
       uses: actions/checkout@v4
 
@@ -60,21 +74,12 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Build, tag, and push image to Amazon ECR
-      id: build-image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        # IMAGE_TAG: ${{ github.sha }}
-        IMAGE_TAG: test
-      run: |
-        # Build a docker container and
-        # push it to ECR so that it can
-        # be deployed to ECS.
-        docker build -t 381492074864.dkr.ecr.ap-northeast-2.amazonaws.com/dolphindance-api:latest
-        # docker build -t $ECR_REPOSITORY/$ECR_REPONAME:$IMAGE_TAG .
-        # docker push $ECR_REPOSITORY/$ECR_REPONAME:$IMAGE_TAG
-        docker push 381492074864.dkr.ecr.ap-northeast-2.amazonaws.com/dolphindance-api:latest
-        echo "image=$ECR_REPOSITORY/$ECR_REPONAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
+    - name: Build and push
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        push: true
+        tags: ${{ env.ECR_REPOSITORY }}/${{ env.ECR_REPONAME }}:${{ env.SHA }}
 
     # - name: Fill in the new image ID in the Amazon ECS task definition
     #   id: task-def
